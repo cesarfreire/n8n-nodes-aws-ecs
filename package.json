@@ -1,0 +1,54 @@
+{
+    "name": "n8n-nodes-aws-ecs",
+    "version": "1.0.0",
+    "description": "N8N AWS ECS node.",
+    "license": "MIT",
+    "keywords": [
+        "n8n-community-node-package",
+        "n8n-nodes",
+        "n8n",
+        "aws",
+        "ecs"
+    ],
+    "author": {
+        "name": "Cesar Augusto Freire",
+        "email": "iceesar@live.com"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/cesarfreire/n8n-nodes-aws-ecs"
+    },
+    "scripts": {
+        "build": "n8n-node build",
+        "build:watch": "tsc --watch",
+        "dev": "n8n-node dev",
+        "lint": "n8n-node lint",
+        "lint:fix": "n8n-node lint --fix",
+        "release": "n8n-node release",
+        "prepublishOnly": "n8n-node prerelease"
+    },
+    "files": [
+        "dist"
+    ],
+    "n8n": {
+        "n8nNodesApiVersion": 1,
+        "credentials": [],
+        "nodes": [
+            "dist/nodes/Aws/ECS/AwsEcs.node.js"
+        ]
+    },
+    "devDependencies": {
+        "@n8n/node-cli": "*",
+        "@types/xml2js": "^0.4.14",
+        "eslint": "9.32.0",
+        "prettier": "3.6.2",
+        "release-it": "^19.0.4",
+        "typescript": "5.9.2"
+    },
+    "peerDependencies": {
+        "n8n-workflow": "*"
+    },
+    "dependencies": {
+        "xml2js": "^0.6.2"
+    }
+}
