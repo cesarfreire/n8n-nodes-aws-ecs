@@ -97,8 +97,6 @@ export class AwsEcs implements INodeType {
 
 				const responseData = await awsApiRequest.call(this, 'ecs', 'POST', '/', {}, headers);
 
-				console.log(responseData);
-
 				return responseData.clusterArns.map((clusterArn: string) => ({
 					name: clusterArn,
 					value: clusterArn,
@@ -106,6 +104,7 @@ export class AwsEcs implements INodeType {
 			},
 			// Get all the available services to display them to user so that they can select them easily
 			async getServices(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
+				const returnData: INodePropertyOptions[] = [];
 				// get the cluster name from the parameters
 				const clusterName = this.getNodeParameter('clusterName', 0) as string;
 
@@ -118,9 +117,10 @@ export class AwsEcs implements INodeType {
 					'X-Amz-Target': 'AmazonEC2ContainerServiceV20141113.ListServices',
 				};
 
-				const body = {
+				const body: { cluster: string; maxResults: number; nextToken?: string } = {
 					// pass the cluster name to list the services
 					cluster: clusterName,
+					maxResults: 50,
 				};
 
 				const responseData = await awsApiRequest.call(this, 'ecs', 'POST', '/', body, headers);
@@ -129,16 +129,45 @@ export class AwsEcs implements INodeType {
 					return [];
 				}
 
-				return responseData.serviceArns.map((serviceArn: string) => ({
-					name: serviceArn,
-					value: serviceArn,
-				}));
+				returnData.push(
+					...responseData.serviceArns.map((serviceArn: string) => ({
+						name: serviceArn,
+						value: serviceArn,
+					})),
+				);
+
+				if (responseData.nextToken) {
+					let nextToken = responseData.nextToken;
+					while (true) {
+						body.nextToken = nextToken;
+						const additionalData = await awsApiRequest.call(
+							this,
+							'ecs',
+							'POST',
+							'/',
+							body,
+							headers,
+						);
+						returnData.push(
+							...additionalData.serviceArns.map((serviceArn: string) => ({
+								name: serviceArn,
+								value: serviceArn,
+							})),
+						);
+						nextToken = additionalData.nextToken;
+
+						if (!nextToken) {
+							break;
+						}
+					}
+				}
+				return returnData;
 			},
 		},
 	};
 
 	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
-		const returnData: IDataObject[] = [];
+		const returnData: INodeExecutionData[] = [];
 
 		const cluster = this.getNodeParameter('clusterName', 0);
 		const service = this.getNodeParameter('serviceName', 0);
@@ -157,7 +186,9 @@ export class AwsEcs implements INodeType {
 
 		const responseData = await awsApiRequest.call(this, 'ecs', 'POST', '/', body, headers);
 
-		returnData.push(responseData as IDataObject);
+		if (responseData) {
+			returnData.push({ json: responseData as IDataObject });
+		}
 
 		return [returnData as INodeExecutionData[]];
 	}
