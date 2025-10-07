@@ -6,6 +6,7 @@ import {
 	type IHttpRequestOptions,
 	type IHttpRequestMethods,
 	ApplicationError,
+	IDataObject,
 } from 'n8n-workflow';
 import { IRequestBody } from './types';
 
@@ -32,36 +33,14 @@ export async function awsApiRequest(
 	} as IHttpRequestOptions;
 
 	try {
-		return JSON.parse(
-			(await this.helpers.requestWithAuthentication.call(this, 'aws', requestOptions)) as string,
-		);
+		const responseData: IDataObject = (await this.helpers.httpRequestWithAuthentication.call(
+			this,
+			'aws',
+			requestOptions,
+		)) as IDataObject;
+		return responseData;
 	} catch (error) {
-		const statusCode = (error.statusCode || error.cause?.statusCode) as number;
-		let errorMessage =
-			error.response?.body?.message || error.response?.body?.Message || error.message;
-
-		if (statusCode === 403) {
-			if (errorMessage === 'The security token included in the request is invalid.') {
-				throw new ApplicationError('The AWS credentials are not valid!', { level: 'warning' });
-			} else if (
-				errorMessage.startsWith(
-					'The request signature we calculated does not match the signature you provided',
-				)
-			) {
-				throw new ApplicationError('The AWS credentials are not valid!', { level: 'warning' });
-			}
-		}
-
-		if (error.cause?.error) {
-			try {
-				errorMessage = JSON.parse(error.cause?.error).message;
-				// eslint-disable-next-line @typescript-eslint/no-unused-vars
-			} catch (ex) {
-				// Ignore the error
-			}
-		}
-
-		throw new ApplicationError(`AWS error response [${statusCode}]: ${errorMessage}`, {
+		throw new ApplicationError(`AWS error response [${JSON.stringify(error)}]`, {
 			level: 'warning',
 		});
 	}
