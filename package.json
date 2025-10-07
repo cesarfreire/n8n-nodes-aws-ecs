@@ -1,6 +1,6 @@
 {
     "name": "@cesarfreire/n8n-nodes-aws-ecs",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "N8N AWS ECS node.",
     "license": "MIT",
     "keywords": [
